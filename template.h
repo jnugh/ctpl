@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <dlfcn.h>
 #define TPL_BUFFER 1000
 #define REPLACE_BUFFER 300
 typedef struct tplVar{
@@ -24,4 +25,7 @@ extern int displayTpl(char*);
 extern int addRePuffer(char*, int*, char);
 extern int inputVar(char*, int*, const char*);
 extern char *searchTplVar(const char*);
+extern void getVarName(const char*, char*, size_t, int*);
+extern int callPlugin(char*, int*, char*);
+extern int deleteVarList(tplVar*);
 #endif

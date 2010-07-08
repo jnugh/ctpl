@@ -30,5 +30,6 @@ int displayCounter(int countUp){
 		fprintf(counter, "%i", ++currentn);
 	}else
 		currentn++;
+	fclose(counter);
 	return currentn;
 }

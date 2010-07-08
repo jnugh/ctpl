@@ -59,7 +59,7 @@ int displayTpl(char *filename){
 	char puffer[TPL_BUFFER];
 	char rePuffer[TPL_BUFFER];
 	char replaceVar[REPLACE_BUFFER];
-	int pufferlen, i, j, countBackSlash;
+	int pufferlen, i, countBackSlash;
 	int pufferCount = 0;
 	tpl = fopen(filename, "r");
 	if(tpl == NULL){
@@ -76,16 +76,16 @@ int displayTpl(char *filename){
 				if(puffer[i+1] == '$'){
 					if(countBackSlash % 2 != 0)
 						continue;
-					for(j = 2; j < pufferlen - i; j++){
-						if(puffer[i+j] == '}' || puffer[i+j] == '\0'){
-							break;
-						}
-						replaceVar[j-2] = puffer[i+j];
-						replaceVar[j-1] = '\0';
-					}
-					inputVar(rePuffer, &pufferCount, replaceVar);
-					i = i+j;
-				}
+					getVarName(&puffer[i+2], replaceVar, REPLACE_BUFFER * sizeof(char), &i);
+					i++;
+					if(inputVar(rePuffer, &pufferCount, replaceVar) == 0);
+				}else{
+					if(countBackSlash % 2 != 0)
+						continue;
+					getVarName(&puffer[i+1], replaceVar, REPLACE_BUFFER * sizeof(char), &i);
+					//i++;
+					callPlugin(rePuffer, &pufferCount, replaceVar);
+				}	
 			}else if(puffer[i] == '\\'){
 				countBackSlash++;
 			}else{
@@ -132,4 +132,73 @@ char *searchTplVar(const char *varName){
 		var = var->next;
 	}
 	return NULL;
+}
+
+void getVarName(const char *start, char *varName, size_t puffersize, int *i){
+	int j;
+	for(j = 0; j < puffersize - 1; j++){
+		if(start[j] == '}' || start[j] == '\0'){
+			break;
+		}
+		varName[j] = start[j];
+		varName[j+1] = '\0';
+	}
+	*i += j + 1;
+}
+
+int callPlugin(char *puffer, int *count, char *pluginName){
+	void *dynPlugin;
+	char *error;
+	char *(*callPlugin)(char*, size_t);
+	char *pluginPath;
+	int i, j;
+	char pufferReturn[REPLACE_BUFFER]  = "\0";
+	int pufferlen;
+	pluginPath = (char*)malloc((strlen("plugins/ .so") + strlen(pluginName)) * sizeof(char));
+	strcpy(pluginPath, "plugins/");
+	j = strlen("plugins/");
+	for(i = 0; pluginName[i] != '\0'; i++, j++){
+		pluginPath[j] = pluginName[i];
+	}
+	strcpy(&pluginPath[j], ".so\0");
+	dynPlugin = dlopen(pluginPath, RTLD_LAZY);
+	free(pluginPath);
+	if(dynPlugin == NULL){
+		fprintf(stderr, "Faild while loading plugin: %s\n", dlerror());
+		return 1;
+	}
+	dlerror();
+	*(void**)(&callPlugin) = dlsym(dynPlugin, "callPlugin");
+	if ((error = dlerror()) != NULL)  {
+		fprintf(stderr, "%s\n", error);
+		return 1;
+	}
+	(*callPlugin)(pufferReturn, REPLACE_BUFFER);
+	pufferlen = strlen(pufferReturn);
+	//for(i = 0; i < pufferlen; i++){
+	//	addRePuffer(puffer, count, pufferReturn[i]);
+	//}
+	dlclose(dynPlugin);
+	return 0;
+}
+
+int deleteVarList(tplVar *root){
+	tplVar *i, *j;
+	i = root;
+	j = NULL;
+	if(i == NULL)
+		return 0;
+	do{
+		j = i->next;
+		free(i->varName);
+		free(i->varValue);
+		free(i);
+		i = j;
+	}while(i->next != NULL);
+	if(j != NULL){
+		free(j->varName);
+		free(j->varValue);
+		free(j);
+	}
+	return 0;
 }

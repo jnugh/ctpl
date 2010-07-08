@@ -3,5 +3,6 @@
 <title>Test CGI</title>
 </head>
 <body>
-<p>{$Test1}</p>
+<p>{printDate}</p>
+<p>{$est}</p>
 </html>

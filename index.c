@@ -9,4 +9,5 @@ int main(void){
 	addTplVar("Test1", "Laaaaaa1");
 	printf("<p>%s, %s</p>\n", tplVarRoot->varName, tplVarRoot->varValue);
 	displayTpl("tpl/test.tpl");
+	deleteVarList(tplVarRoot);
 }
