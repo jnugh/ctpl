@@ -175,9 +175,9 @@ int callPlugin(char *puffer, int *count, char *pluginName){
 	}
 	(*callPlugin)(pufferReturn, REPLACE_BUFFER);
 	pufferlen = strlen(pufferReturn);
-	//for(i = 0; i < pufferlen; i++){
-	//	addRePuffer(puffer, count, pufferReturn[i]);
-	//}
+	for(i = 0; i < pufferlen; i++){
+		addRePuffer(puffer, count, pufferReturn[i]);
+	}
 	dlclose(dynPlugin);
 	return 0;
 }
